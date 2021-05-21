@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendarservice-deployment
+  labels:
+    app: calendarservice
+    name: calendarservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:                          
+      app: calendarservice
+
+ #-------------------------------> RollingUpdate definition
+  strategy:
+    type: RollingUpdate 
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 50%
+
+#-------------------------------> Blueprint for Pod
+  template:
+    metadata:
+      labels:
+        app: calendarservice
+    spec:
+      containers:
+      - name: calendarservice
+        image: crfitverse.azurecr.io/calendarservice:$(Build.BuildId)
+        ports:
+        - containerPort: 5007
+        - name: health-port
+          containerPort: 80
+        resources:
+          requests:
+            cpu: "25m"
+            memory: "32Mi"
+          limits:
+            cpu: "50m"
+            memory: "64Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cs-service
+spec:
+  selector:
+    app: calendarservice
+  ports:
+    - protocol: TCP
+      port: 87
+      targetPort: 5007
+
